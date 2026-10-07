@@ -1,0 +1,201 @@
+PASSO A PASSO - Pirate Battle (React + PixiJS)
+
+O que ja foi feito:
+- Leitura completa do README.md (210 linhas)
+- Listagem da pasta assets/ (spritesheets, tilesheets, PNGs, sons, referencias visuais)
+- Fase 1: Bootstrap do projeto (Vite + React + TypeScript) - CONCLUIDA
+- Fase 2: Estrutura de arquitetura - CONCLUIDA
+- Fase 3: Configuracao de gameplay - CONCLUIDA
+- Fase 4: Carregamento de assets - CONCLUIDA
+- Fase 5: Simulacao (engine + game) - CONCLUIDA
+- Fase 6: Telas + controles de toque - CONCLUIDA
+- Fase 7: TanStack Query + Axios + MSW (ranking/historico/network scenarios) - CONCLUIDA
+
+Fase 1: Bootstrap do projeto (Vite + React + TypeScript) - CONCLUIDA
+- [x] ...
+
+Fase 2: Estrutura de arquitetura - CONCLUIDA
+- [x] ...
+
+Fase 3: Configuracao de gameplay - CONCLUIDA
+- [x] ...
+
+Fase 4: Carregamento de assets - CONCLUIDA
+- [x] ...
+
+Fase 5: Simulacao (engine + game) - CONCLUIDA
+- [x] Implementar game loop com delta-time (independente de framerate) - engine/time.ts, engine/gameLoop.ts
+- [x] Player: movimento frente, rotacao, tiro frontal + lateral (esq/dir) - game/simulation.ts, systems/movement.ts, systems/weapons.ts (frontal 1 projétil, laterais 3 cada)
+- [x] Inimigos: Chaser (persegue + dano ao colidir) e Shooter (aproxima + dispara no alcance) - systems/ai.ts
+- [x] Projeteis: uma unica aplicacao de dano, removido ao acertar/obstaculo/expirar/sair da arena - systems/projectiles.ts
+- [x] Colisoes: bloquear navios/projeteis por ilhas, respeitar limites da arena - game/arena.ts (ilhas + bounds)
+- [x] Spawn: pontos livres de obstaculos, afastados do player (evitar dano imediato) - systems/spawning.ts (>= 250px)
+- [x] Health bars acima de player e inimigos - pixi/GameRenderer.ts + ui/GameHud.tsx
+- [x] Efeitos: disparo, explosao, deterioracao visual por vida - systems/effects.ts (muzzle 140ms, splash 420ms, explosion 460ms)
+- [x] Timer 60-180s, pausa (manual + foco/aba), retomada com acao do usuario, sem acumular input - simulation.ts (start/pause/resume/end) + GameScreen.tsx (blur/visibility + suppressHeld + latch de press)
+- [x] Pontuacao: +1 por inimigo destruido por jogador; Chaser autodestruido contra jogador nao pontua - simulation.ts (score)
+- [x] Fim de partida: tempo ou vida zero; interromper tudo - reason 'timeUp' | 'playerDead'
+
+Verificacao da Fase 5 (Playwright, dev server na porta 5199):
+- 59/59 checagens passando: start, movimento, tiros, bloqueio por ilha,
+  spawn, health bars, pausa/blur/resume sem input acumulado, score,
+  timeUp/playerDead, play again restaura tudo, zero erros de console.
+- tsc -b limpo, eslint sem erros, npm run build OK.
+- Suíte preservada em /tmp/opencode/phase5-verify/verify-phase5.tmp.mjs
+  (copiar de volta ao repo para rodar; resolve @playwright/test do node_modules local).
+
+Notas/decisoes (detalhes em ARCHITECTURE.md):
+- step() recebe milissegundos; fisica usa segundos, timers em ms.
+- antialias desligado (fill-rate limita no ambiente sem GPU).
+- hook de teste window.__pirateBattle { simulation, input, app, renderer }.
+- Input: latch de press em setAction; keyup NAO apaga presses (tap de um
+  frame dispara uma vez); fire = consumePress || isDown.
+
+--------------------------------------------------------------- Fase 6 ----
+Fase 6: Telas + controles de toque - CONCLUIDA
+
+Feito:
+- [x] config/gameConfig.ts: SPAWN_INTERVAL_LIMITS = {500..10000ms} e
+  validateGameConfig exige o intervalo dentro desses limites.
+- [x] createGameConfigSnapshot aceita GameConfigOverrides (deep partial de
+  enemySpawn/player/world) - App monta o snapshot a partir das opcoes.
+- [x] ui/storage.ts: PlayerOptions {sessionTimeSeconds, spawnIntervalMs} e
+  MatchResult persistidos em localStorage ('pirate-battle.options',
+  'pirate-battle.last-result'), validate/load/save com fallback p/ padroes.
+- [x] ui/format.ts: formatTime(ms) -> "m:ss" e END_LABELS compartilhados.
+- [x] ui/screens/ResultScreen.tsx: dialogo de fim de partida com END_LABELS,
+  Score / Time played / Hull / Leaderboard (RegistrationState, default
+  'Not registered yet') e botoes Play again + Main menu; recebe
+  primaryActionRef do GameScreen.
+- [x] ui/screens/MenuScreen.tsx: titulo, Play, Options, card do ultimo
+  resultado (localStorage), abas Ranking/Match History (placeholders p/ Fase 7),
+  lista de comandos (icones + kbd) e hint de toque.
+- [x] ui/screens/OptionsScreen.tsx: session time (60-180s) e enemy spawn time
+  (500-10000ms), limites em hint, erros role=alert, salva e volta.
+- [x] ui/components/TouchControls.tsx (NOVO): clusters esq
+  (turn-left/forward/turn-right) e dir (fire-left/front/right); Pointer Events
+  + setPointerCapture por dedo (Set de pointerIds por pad -> multi-touch,
+  acao so solta no ultimo dedo); touch-action:none; onAction(action,isDown)
+  alimenta input.setAction; container aria-hidden e botoes tabIndex -1
+  (duplicam o teclado); .touch-controls so renderiza em (pointer: coarse).
+- [x] ui/shell.css (NOVO): .shell fullscreen/scrollavel escura; .menu__panel
+  border-image panel_menu.png slice 40 32 40 32 fill (borders do atlas);
+  tabs role=tab, options-form, command-list, touch pads fixos nos cantos com
+  safe-area, @media (pointer: coarse) esconde .controls-legend,
+  @media (orientation: portrait) and (pointer: coarse) mostra .rotate-hint,
+  breakpoints 720px e landscape 560px.
+- [x] App.tsx: state machine 'menu' | 'options' | 'match'; Play ->
+  loadPlayerOptions -> createGameConfigSnapshot({sessionTimeSeconds,
+  enemySpawn:{intervalMs}}) -> <GameScreen onFinished onExit>; onFinished =
+  saveLastResult; sair do match desmonta GameScreen (libera Pixi/loop/input).
+- [x] GameScreen.tsx: prop onFinished; useLayoutEffect monta MatchResult na
+  transicao p/ 'ended' e chama onFinished 1x por partida (finishSentRef,
+  resetado em start/restart) apenas para timeUp/playerDead; renderiza
+  <ResultScreen> no lugar do overlay ended; <TouchControls onAction>; botao
+  'Main menu' na pausa (end('abandoned') + onExit); controls-legend escondida
+  em pointer:coarse e hint de rotacao em retrato via shell.css.
+
+Verificacao da Fase 6 (Playwright, dev server na porta 5199):
+- 40/40 checagens (verify-phase6.mjs): menu + abas, validacao e persistencia
+  de options, snapshot da partida vindo das opcoes, ResultScreen com
+  last-result salvo, Main menu desmonta o canvas e libera o hook, refresh
+  preserva opcoes + ultimo resultado, coarse pointer (6 pads, clusters
+  corretos, dois dedos simultaneos, liberacao por dedo), hint de retrato.
+- Regressao Fase 5: 60/60 (verify-phase5.mjs) - duas execucoes verdes.
+  BOOT MUDOU: suite clica 'button:has-text("Play")' antes de
+  'text=Start match'.
+- tsc -b limpo, eslint sem erros nem warnings, npm run build OK.
+- Suites preservadas em /tmp/opencode/phase6-verify/
+  {verify-phase5.mjs,verify-phase6.mjs} (copiar ao repo para rodar; resolvem
+  @playwright/test do node_modules local).
+
+Notas/decisoes (detalhes em ARCHITECTURE.md):
+- Touch: cada pad guarda seus proprios pointerIds; setPointerCapture mantem
+  o pointerup vindo do pad mesmo com o dedo deslizando.
+- Fim de partida persistido so para timeUp/playerDead; 'abandoned' encerra a
+  partida sem virar "last match".
+- Pausa -> Main menu encerra como 'abandoned' antes de voltar ao menu.
+
+Nao iniciado (proxima fase):
+- Fase 8: Playwright E2E final + perf + docs.
+
+--------------------------------------------------------------- Fase 7 ----
+Fase 7: TanStack Query + Axios + MSW - CONCLUIDA
+
+Feito:
+- [x] Dependencias: @tanstack/react-query ^5.104, axios ^1.20, msw ^2.15;
+  `npx msw init public/ --save` cria public/mockServiceWorker.js e a
+  entrada msw.workerDirectory no package.json.
+- [x] api/client.ts: axios com baseURL '/api', timeout 3000ms e
+  describeError() (timeout | conexao | status HTTP).
+- [x] api/player.ts: getPlayer() com id/nome em localStorage
+  ('pirate-battle.player-id|name') e createId() via crypto.randomUUID.
+- [x] api/contracts.ts: MatchConfig + matchConfigKey (partidas so se
+  comparam na mesma config: 'sessionTimeSeconds:intervalMs'),
+  matchConfigFrom(options), PAGE_SIZE=5, compareRankingEntries (score
+  desc -> date asc -> id asc), compareHistoryRecords, RegisterMatchBody/
+  Response e RegistrationState.
+- [x] api/queryClient.ts + api/queries.ts: staleTime 15s / gcTime 5min,
+  retry so para 408/429/5xx ou sem resposta (isRetryable, max 2) e
+  mutations com retry 1x; useRanking/useHistory com placeholderData
+  keepPreviousData (paginas novas nao piscam o conteudo antigo).
+- [x] api/registrationQueue.ts: fila persistida em
+  'pirate-battle.pending-registrations' (loadQueue/saveQueue/
+  removeFromQueue/bumpAttempts/clearQueue/sendRegistration); id gerado
+  no cliente para idempotencia (POST repetido responde duplicate:true e
+  nao regrava).
+- [x] api/registration.tsx: RegistrationProvider (enqueue -> gravar na
+  fila -> mutate; onSuccess desenfileira e invalida ['ranking'] e
+  ['history']; onError incrementa attempts; flush da fila no mount) e
+  useRegistration; contexto separado em registrationContext.ts p/ nao
+  violar react-refresh/only-export-components.
+- [x] mocks/scenario.ts: 13 cenarios (success, empty, multi-page, slow,
+  variable-latency, out-of-order, timeout, network-error, server-error,
+  ranking-unavailable, history-unavailable, register-timeout,
+  offline-at-end), knobs ?scenario= ?seed= ?latency= na URL, seed
+  mulberry32, resetNetworkState e installNetworkTestApi ->
+  window.__pirateBattleNet (get/setScenario, seed, latencia, request
+  count, reset) usado pelos testes.
+- [x] mocks/store.ts (records idempotentes em 'pirate-battle.records'),
+  mocks/fixtures.ts (rankingFixtures com offset de nomes + empates,
+  historyFixtures), mocks/handlers.ts (GET /api/ranking, GET
+  /api/history, POST /api/matches com trackRequest; server-error = GET
+  500 / POST 422), mocks/browser.ts (setupWorker, onUnhandledRequest
+  bypass) iniciado no main.tsx antes dos providers.
+- [x] UI: components Pager, RankingPanel, HistoryPanel, NetworkPanel;
+  abas reais do menu com loading / vazio / erro+retry / paginas /
+  banner de refresh em background; aviso .menu__pending com o total de
+  pendencias; ResultScreen mostra RegistrationState e botao 'Retry
+  registration' quando failed; NetworkPanel com seletor de cenarios e
+  Reset de estado; shell.css com .data-table, .pager, .btn--text,
+  .registration--* e .network*.
+
+Verificacao da Fase 7 (Playwright, dev server na porta 5199):
+- 70/70 checagens (verify-phase7.mjs), 13 blocos: ranking/historico
+  paginados e ordenados, empate deterministico, mesma config so
+  compara entre si, os 13 cenarios (inclui latencia, fora de ordem,
+  timeout, 500/422, 503, POST timeout, falha de conexao), fila
+  pendente sobrevivendo a refresh e registrando tudo ao recuperar,
+  sem duplicar registros, reset de estado, zero erros de console.
+- Regressoes: Fase 6 40/40 e Fase 5 60/60 (check do Leaderboard da
+  F6 agora espera 'Recorded in ranking and history' em vez do
+  placeholder 'Not registered yet').
+- tsc -b limpo, eslint sem erros nem warnings, npm run build OK; smoke
+  no build publicado (vite preview :4173) com MSW: fixture de ranking,
+  troca de cenario e partida inteira registrando no historico.
+- Suites preservadas em /tmp/opencode/phase7-verify/
+  {verify-phase7.mjs,preview-smoke.mjs} e regressoes em
+  /tmp/opencode/phase6-verify/ (copiar ao repo para rodar; resolvem
+  @playwright/test do node_modules local).
+
+Notas/decisoes (detalhes em ARCHITECTURE.md):
+- BUG corrigido: o dedup da fila usava `item.id === record.id` (apagava
+  todos os registros anteriores); o correto e `!==`.
+- Falha de API nunca bloqueia o jogo: o resultado entra na fila antes
+  do POST e o jogador pode iniciar outra partida com pendencias.
+- Latencias: base 120ms, slow 1800ms, variable 150-1400ms, out-of-order
+  por pagina (impar 1500ms / par 120ms), timeout 3000ms + 700ms de
+  folga; a resposta atrasada nunca sobrescreve a pagina atual.
+- 1 partida = 1 registro; contas de restauracao/refresh reenviam a
+  fila inteira sem duplicar (idempotencia pelo id do cliente).
+
