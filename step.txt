@@ -199,3 +199,42 @@ Notas/decisoes (detalhes em ARCHITECTURE.md):
 - 1 partida = 1 registro; contas de restauracao/refresh reenviam a
   fila inteira sem duplicar (idempotencia pelo id do cliente).
 
+
+--------------------------------------------------------------- Fase 8 ----
+Fase 8: Playwright E2E final + perf + docs - EM ANDAMENTO
+
+Feito:
+- [x] Suíte E2E desktop completa: 12 blocos (01-12) + regressão visual
+  (menu / arena estável / resultado) = 63 testes; verde a workers=3
+  (61 passed + 2 skip = testes exclusivos do projeto mobile).
+  helpers.ts: watchBullets/watchEnemySpawns/watchEffects (armadilha de
+  propriedade - o sim substitui arrays a cada tick), tapAction (tap
+  sincrono via API de input, imune a frame lento), spawnEnemy com IA
+  congelada (attackTimerMs), watchBullets grava tambem direcao no spawn,
+  awaitRecorded (espera 'recorded' clicando em Retry registration quando
+  o mock estoura o budget de 3s do axios).
+- [x] Bugs corrigidos durante a estabilizacao:
+  * broadside esquerdo disparava para a DIREITA (weapons.ts usava
+    heading + PI/2; em coords de tela y+ o porto e heading - PI/2);
+  * menu ficava com Play/Options fora do scroll em viewport curto
+    (align-items:center corta o topo; agora margin:auto no .menu);
+  * aba Controls criada (lista de comandos saiu de baixo do ranking);
+  * 12-retry-late / 08-persistencia / 05-spawn estabilizados.
+- [x] README.md da solução (setup, variáveis de ambiente, comandos,
+  controles, configuração de gameplay, 13 cenários + receitas para
+  reproduzir falhas, testes, performance, deploy); enunciado original
+  preservado em DESAFIO.md; script "typecheck" no package.json.
+- [x] .gitignore: *.tsbuildinfo + CLIs de deploy (.vercel/.netlify/
+  .wrangler); scripts de debug da raiz removidos.
+
+Verificacao ate aqui:
+- Desktop: 63 testes verdes (relatorio em /tmp/opencode/run8.log).
+- tsc -b limpo, eslint limpo, npm run build OK.
+
+Restante:
+- [ ] Suíte mobile (--project=mobile) + baselines visuais mobile.
+- [ ] Performance: npm run test:perf -> reports/performance.md + .json.
+- [ ] ARCHITECTURE.md: limitações e decisões de balanceamento (README:208).
+- [ ] Deploy: URL pública obrigatória (Vercel/Netlify/CF) - pendente de
+      escolha/credenciais.
+- [ ] Relatórios de teste/perf versionados + commit de entrega.
