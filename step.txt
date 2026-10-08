@@ -226,15 +226,42 @@ Feito:
   preservado em DESAFIO.md; script "typecheck" no package.json.
 - [x] .gitignore: *.tsbuildinfo + CLIs de deploy (.vercel/.netlify/
   .wrangler); scripts de debug da raiz removidos.
+- [x] Suíte mobile verde: projeto "mobile" trocado para Pixel 5 LANDSCAPE
+  (no retrato o .rotate-hint full-screen interceptava todos os cliques);
+  suíte completa 62/63 -> teste "portrait shows the rotate hint" ajustado
+  (o elemento so existe no GameScreen, apos startMatch, e as asserts
+  passaram a auto-retry via toBeVisible/toBeHidden).
+- [x] Bug real corrigido: .overlay (dialogo de resultado/pausa) nao tinha
+  scroll - em 802x293 os botoes Play again/Main menu ficavam 100% fora da
+  viewport; agora overflow:auto + overscroll-behavior:contain (game.css).
+- [x] visual.spec.ts estabilizado por projeto:
+  * menu = page-shot (.shell opaco, cobre painel + fundo, sem artefato
+    branco de captura alem da viewport);
+  * resultado = element-shot com máscara no valor de "Time played"
+    (tempo real varia por execução) e elapsed pinado antes do fim
+    (sem spawn de inimigo na captura);
+  * arena = relógio pinado (1:47) + overlay da pausa escondido: a
+    baseline mostra a arena de verdade (navio, ilhas, HUD), nao o dialogo.
+  Baselines versionadas por projeto em visual.spec.ts-snapshots/ (6 PNGs).
+- [x] test:perf quebrado (testDir ./tests/e2e nao alcancava tests/perf):
+  criado playwright.perf.config.ts (testDir tests/perf, workers:1 para
+  compartilhar o objeto de relatorio, reporter list p/ nao sobrescrever
+  reports/results.json); piso de fps ajustado para SwiftShader (~7.1 real)
+  e jogador mantido vivo para a partida inteira de 3 min.
+  Relatorios gerados: reports/performance.md + .json (180s simulados,
+  avgFps 7.1, p95 200ms, pico 29 entidades, memoria ~10MB estavel/5 ciclos).
+- [x] ARCHITECTURE.md: secao "Limitations and balance decisions"
+  (numeros do gameConfig.ts + limitacoes do frontend-only/SwiftShader).
+- [x] README.md traduzido para INGLES (enunciado exige documentacao em
+  ingles, §88) e atualizado (126 testes, Pixel 5 landscape, perf real).
 
 Verificacao ate aqui:
-- Desktop: 63 testes verdes (relatorio em /tmp/opencode/run8.log).
+- Combinada desktop+mobile: 124 passed / 0 failed / 2 skip (13.1m,
+  /tmp/opencode/combined1.log) - 126 testes.
+- Perf: 2 passed (3.7m, /tmp/opencode/perf2.log).
 - tsc -b limpo, eslint limpo, npm run build OK.
 
 Restante:
-- [ ] Suíte mobile (--project=mobile) + baselines visuais mobile.
-- [ ] Performance: npm run test:perf -> reports/performance.md + .json.
-- [ ] ARCHITECTURE.md: limitações e decisões de balanceamento (README:208).
 - [ ] Deploy: URL pública obrigatória (Vercel/Netlify/CF) - pendente de
-      escolha/credenciais.
-- [ ] Relatórios de teste/perf versionados + commit de entrega.
+      escolha/credenciais; README tem placeholder.
+- [ ] Commit de entrega (18 arquivos alterados/novos no worktree).

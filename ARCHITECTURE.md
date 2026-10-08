@@ -164,3 +164,52 @@ duplicate the keyboard controls) and `shell.css` shows them only under
 `@media (pointer: coarse)`, which also hides `.controls-legend`. Landscape is
 the supported orientation: portrait + coarse pointer displays `.rotate-hint`
 over the match.
+
+## Limitations and balance decisions
+
+Every gameplay number lives in `config/gameConfig.ts` as typed data, so a
+balance change never touches system code; `createGameConfigSnapshot` deep-clones
+the defaults plus per-match overrides, and `validateGameConfig` enforces the
+documented bounds.
+
+**Balance decisions**
+
+- **Session and spawns:** 120 s matches (60–180) and a 3000 ms spawn interval
+  (500–10000) are the two knobs exposed in Options — the defaults produce a
+  readable ~40-spawn match without swarming. Spawns pick a free point at least
+  250 px from the player (10 tries), split 60 % chaser / 40 % shooter, so the
+  player always has room to react.
+- **Player:** hull 100, top speed 220, turn rate π rad/s, 500 ms of
+  invulnerability after (re)spawn. The front cannon is a fast single shot
+  (damage 10, cooldown 250 ms, range 500); each broadside fires 3 projectiles
+  with a 0.15 spread (damage 8, cooldown 400 ms, range 400) — wider coverage
+  at the cost of reach, rewarding positioning over kiting.
+- **Enemies:** chasers are glass cannons that close fast (hull 40, speed 180)
+  and ram for 20 damage (worth 1 point); shooters hold at 220 px — just inside
+  the player's broadside reach — and fire 15 damage every 1200 ms (hull 60),
+  so pushing one is a real trade-off. Enemy projectile damage (15) vs player
+  hull (100) gives ~6 clean hits before death, enough to recover from a
+  mistake in a two-minute match.
+- **Arena:** a fixed 1280×720 world with seven islands that block ships and
+  cannonballs (`islandCollision: true`, 40 px bounds padding), which turns the
+  layout into cover and keeps fights local.
+
+**Limitations**
+
+- **Frontend-only delivery:** the published build runs the MSW worker, so the
+  leaderboard/history/registration API is a local mock store — there is no
+  real backend, auth or cross-device identity (the player id is generated
+  client-side into localStorage).
+- **Performance environment:** the reference host renders headless Chromium
+  through SwiftShader (software WebGL), averaging ≈7 fps at 1280×800
+  (`reports/performance.md`). The simulation is delta-time, so gameplay
+  behaviour is frame-rate independent; on hardware with a GPU the fill-rate
+  bound disappears (render JS is < 0.2 ms/frame).
+- **Input scope:** keyboard + the six touch pads only — no gamepad. Coarse
+  pointer devices are supported in landscape; portrait shows the rotate hint
+  instead of a portrait layout.
+- **Network simulation:** the 13 scenarios cover latency, timeouts, HTTP
+  errors and ordering, but not packet loss or bandwidth shaping; seeded delays
+  make even the "random" ones deterministic.
+- **Single-player only:** no multiplayer, replays or leaderboards beyond the
+  mock ranking filtered by configuration.

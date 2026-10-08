@@ -1,194 +1,199 @@
-# Pirate Battle — solução (React + PixiJS)
+# Pirate Battle — solution (React + PixiJS)
 
-Jogo single-player de batalha naval no navegador: partida em arena com ilhas,
-Chasers e Shooters, ranking e histórico de partidas via APIs REST simuladas com
-MSW, consumidas por Axios + TanStack Query.
+Single-player browser naval battle: a timed arena match against Chasers and
+Shooters among islands, plus a leaderboard and match history backed by REST
+APIs mocked with MSW and consumed through Axios + TanStack Query.
 
 - **Stack:** React 18 · TypeScript · Vite 5 · PixiJS 8 · TanStack Query 5 ·
   Axios · MSW 2 · Playwright
-- **Documentação:** [`ARCHITECTURE.md`](ARCHITECTURE.md) (decisões, integração
-  React/Pixi, limitações) · [`DESAFIO.md`](DESAFIO.md) (enunciado original) ·
-  [`step.txt`](step.txt) (registro das fases)
-- **Deploy:** URL pública — *pendente* (seção [Deploy](#deploy))
+- **Documentation:** [`ARCHITECTURE.md`](ARCHITECTURE.md) (decisions,
+  React/Pixi integration, limitations) · [`DESAFIO.md`](DESAFIO.md) (original
+  brief, in Portuguese) · [`step.txt`](step.txt) (phase log)
+- **Deploy:** public URL — *pending* (see [Deploy](#deploy))
 
 ---
 
 ## Setup
 
-Requisitos: **Node 18+** (recomendado 20) e npm.
+Requirements: **Node 18+** (20 recommended) and npm.
 
 ```bash
-npm ci                       # instalação com lockfile
-npx playwright install chromium   # apenas para rodar os testes
+npm ci                       # install from lockfile
+npx playwright install chromium   # only needed to run the test suites
 npm run dev                  # http://localhost:5173
 ```
 
-**Variáveis de ambiente:** nenhuma é necessária — o jogo roda 100% no browser
-com mocks locais. Arquivos `.env` são suportados pelo Vite, mas o código não
-consome nenhuma chave (`.env*` está no `.gitignore`, mantendo apenas
-`.env.example` se um dia for preciso).
+**Environment variables:** none required — the game runs 100% in the browser
+with local mocks. Vite supports `.env` files, but the code consumes no keys
+(`.env*` is listed in `.gitignore`, keeping only `.env.example` should one ever
+be needed).
 
-Build publicável (estático, sem backend):
+Publishable build (static, no backend):
 
 ```bash
 npm run build     # tsc + vite build -> dist/
-npm run preview   # serve dist/ em http://localhost:4173
+npm run preview   # serves dist/ on http://localhost:4173
 ```
 
-O Service Worker do MSW é servido de `public/`, então qualquer host estático
-funciona sem configuração extra.
+The MSW Service Worker is served from `public/`, so any static host works with
+no extra configuration.
 
-## Comandos
+## Commands
 
-| Comando | O que faz |
+| Command | What it does |
 | --- | --- |
-| `npm run dev` | dev server com hot reload (Vite) |
-| `npm run build` | typecheck + build de produção em `dist/` |
-| `npm run preview` | serve o build `dist/` localmente |
-| `npm run lint` | ESLint (config em `eslint.config.js`) |
-| `npm run typecheck` | verificação de tipos (`tsc -b`, sem emitir) |
-| `npm run test` | Playwright: desktop **e** mobile |
-| `npm run test:e2e` | Playwright só no projeto `desktop` |
-| `npm run test:mobile` | Playwright só no projeto `mobile` (viewport Pixel 5) |
-| `npm run test:perf` | suíte de performance (3 min + memória) |
-| `npm run report` | abre o relatório HTML da última execução |
+| `npm run dev` | dev server with hot reload (Vite) |
+| `npm run build` | typecheck + production build into `dist/` |
+| `npm run preview` | serve the local `dist/` build |
+| `npm run lint` | ESLint (config in `eslint.config.js`) |
+| `npm run typecheck` | type check (`tsc -b`, no emit) |
+| `npm run test` | Playwright: desktop **and** mobile projects |
+| `npm run test:e2e` | Playwright, `desktop` project only |
+| `npm run test:mobile` | Playwright, `mobile` project only (Pixel 5 landscape) |
+| `npm run test:perf` | performance suite (3-minute match + memory cycles) |
+| `npm run report` | open the HTML report of the last run |
 
-Os testes sobem o preview sozinhos (`webServer` no `playwright.config.ts`:
-`npm run build && npm run preview` na porta 4173) — de um checkout limpo basta
-`npm ci && npx playwright install chromium && npm run test:e2e`.
+The suites start the preview server themselves (`webServer` in
+`playwright.config.ts`: `npm run build && npm run preview` on port 4173) — from
+a clean checkout, `npm ci && npx playwright install chromium && npm run test:e2e`
+is enough.
 
-## Controles
+## Controls
 
-### Teclado
+### Keyboard
 
-| Ação | Teclas |
+| Action | Keys |
 | --- | --- |
-| Avançar | `W` ou `↑` |
-| Virar à esquerda | `A` ou `←` |
-| Virar à direita | `D` ou `→` |
-| Tiro frontal | `Espaço` ou `J` |
-| Bordo esquerdo (3 projéteis) | `Q` ou `F` |
-| Bordo direito (3 projéteis) | `E` ou `H` |
-| Pausar / retomar | `P` ou `Esc` |
+| Throttle | `W` or `↑` |
+| Turn left | `A` or `←` |
+| Turn right | `D` or `→` |
+| Front shot | `Space` or `J` |
+| Left broadside (3 projectiles) | `Q` or `F` |
+| Right broadside (3 projectiles) | `E` or `H` |
+| Pause / resume | `P` or `Esc` |
 
-A pausa é automática ao perder o foco da janela/aba; ao retomar, as teclas que
-continuam pressionadas não agem até serem soltas e pressionadas de novo (nada
-de input acumulado). Durante a partida as teclas só são capturadas enquanto o
-contexto de gameplay está ativo.
+The match pauses automatically when the window/tab loses focus; on resume,
+keys still held do nothing until released and pressed again (no accumulated
+input). While a match is running, keys are only captured while the gameplay
+context is active.
 
-### Toque (dispositivos coarse-pointer)
+### Touch (coarse-pointer devices)
 
-Pads em tela: cluster esquerdo (virar à esquerda, avançar, virar à direita) e
-cluster direito (bordo esquerdo, tiro frontal, bordo direito). Multi-touch por
-dedo (cada pad captura seus próprios pointerIds) — dá para navegar e atirar ao
-mesmo tempo. Em retrato aparece o aviso de girar o aparelho.
+On-screen pads: left cluster (turn left, throttle, turn right) and right
+cluster (left broadside, front shot, right broadside). Multi-touch is tracked
+per finger (each pad captures its own pointerIds), so steering and firing can
+happen at the same time. In portrait, a rotate-your-device hint covers the
+match.
 
-## Configuração de gameplay
+## Gameplay configuration
 
 Menu → **Options**:
 
-- **Game session time:** duração da partida, 60–180 s (padrão 120).
-- **Enemy spawn time:** intervalo entre spawns, 500–10000 ms (padrão 3000).
+- **Game session time:** match duration, 60–180 s (default 120).
+- **Enemy spawn time:** interval between spawns, 500–10000 ms (default 3000).
 
-Os limites aparecem no próprio formulário; valores fora da faixa geram mensagem
-de erro acessível (`role="alert"`) e mantêm o form aberto. As escolhas são
-validadas e persistidas em `localStorage` (`pirate-battle.options`) e
-sobrevivem a refresh; cada partida monta seu snapshot de configuração ao
-começar, então mudanças só valem na próxima partida.
+The limits are shown in the form itself; out-of-range values raise an
+accessible error (`role="alert"`) and keep the form open. Choices are
+validated and persisted in `localStorage` (`pirate-battle.options`) across
+refreshes; each match snapshots the configuration at start, so later edits
+only apply to the next match.
 
-Outros dados locais: `pirate-battle.last-result` (card "Last match"),
-`pirate-battle.player-id` / `player-name`, `pirate-battle.records` (registros
-idempotentes) e `pirate-battle.pending-registrations` (fila que sobrevive a
-refresh/offline).
+Other local data: `pirate-battle.last-result` (the "Last match" card),
+`pirate-battle.player-id` / `player-name`, `pirate-battle.records`
+(idempotent record ids) and `pirate-battle.pending-registrations` (the queue
+that survives refresh/offline).
 
-## Cenários de rede (MSW)
+## Network scenarios (MSW)
 
-No menu, bloco **Network scenarios (mock API)** (abaixo das abas):
+In the menu, the **Network scenarios (mock API)** block (below the tabs):
 
-- **Scenario** — um dos 13 cenários abaixo;
-- **Seed** — semente do PRNG (fixtures e atrasos "aleatórios" ficam
-  determinísticos, padrão `1337`);
-- **Latency override (ms)** — força um atraso fixo (vazio = cenário);
-- **Reset state** — limpa cenário/seed/latência, devolve os records às
-  fixtures e esvazia a fila de registros pendentes.
+- **Scenario** — one of the 13 scenarios below;
+- **Seed** — PRNG seed (fixtures and "random" delays become deterministic,
+  default `1337`);
+- **Latency override (ms)** — forces a fixed delay (empty = scenario default);
+- **Reset state** — clears scenario/seed/latency, restores the record store
+  to the fixtures and empties the pending registration queue.
 
-Também dá para fixar tudo pela URL antes de abrir o jogo:
+Everything can also be pinned through the URL before opening the game:
 
 ```
 /?scenario=register-timeout&seed=42&latency=0
 ```
 
-| id (`?scenario=`) | Comportamento |
+| id (`?scenario=`) | Behaviour |
 | --- | --- |
-| `success` | respostas normais (padrão) |
-| `empty` | ranking e histórico vazios |
-| `multi-page` | fixtures grandes, várias páginas nas duas abas |
-| `slow` | cada resposta leva ~1,8 s |
-| `variable-latency` | atraso aleatório com seed (150–1400 ms) |
-| `out-of-order` | páginas ímpares lentas; respostas atrasadas chegam por último |
-| `timeout` | consultas nunca respondem dentro do budget do cliente (3 s) |
-| `network-error` | falha de conexão em tudo |
-| `server-error` | GET responde 500, registro é rejeitado com 422 |
-| `ranking-unavailable` | ranking 503, histórico funciona |
-| `history-unavailable` | histórico 503, ranking funciona |
-| `register-timeout` | o registro é gravado, mas a resposta chega após o timeout do cliente |
-| `offline-at-end` | conexão cai no fim da partida |
+| `success` | normal responses (default) |
+| `empty` | empty leaderboard and history |
+| `multi-page` | large fixtures, several pages in both tabs |
+| `slow` | every response takes ~1.8 s |
+| `variable-latency` | seeded random delay (150–1400 ms) |
+| `out-of-order` | odd pages are slow; late answers arrive last |
+| `timeout` | queries never answer within the client budget (3 s) |
+| `network-error` | connection failure everywhere |
+| `server-error` | GETs answer 500, registration is rejected with 422 |
+| `ranking-unavailable` | leaderboard 503, history works |
+| `history-unavailable` | history 503, leaderboard works |
+| `register-timeout` | the record is stored, but the answer arrives after the client timeout |
+| `offline-at-end` | the connection drops at the end of the match |
 
-### Como reproduzir falhas
+### How to reproduce failures
 
-1. **Registro pendente que se recupera:** scenario `network-error` → jogar até
-   o fim → o resultado entra na fila (aviso "waiting to register") → refresh →
-   fila intacta → troque para `success` → recarregue: tudo registra **uma
-   vez** (idempotência pelo id gerado no cliente).
-2. **Timeout no registro:** `?scenario=register-timeout` → fim de partida →
-   estado "Registration failed — it stays queued" → clicar **Retry
-   registration** → responde rápido (o record já existe) e não duplica.
-3. **Offline no fim da partida:** `offline-at-end` → fim → falha → voltar para
-   `success` e usar **Retry registration**.
-4. **Resposta atrasada nunca sobrescreve a página atual:** `out-of-order` →
-   abas paginadas (página 3 responde rápido, a resposta lenta da página 1/2
-   chega depois e é descartada).
-5. **Erro numa das abas:** `ranking-unavailable` → aba Ranking mostra erro com
-   botão de retry enquanto Match History segue normal (e vice-versa).
-6. **Vazio/loading:** `empty` (lista vazia) e `slow` (estado de carregamento).
-7. **Consulta que nunca responde:** `timeout` → a aba esgota as tentativas de
-   retry do TanStack Query e mostra erro com botão de retry.
+1. **Pending registration that recovers:** scenario `network-error` → play to
+   the end → the result joins the queue (the "waiting to register" notice
+   shows) → refresh → queue intact → switch to `success` → reload: everything
+   registers **exactly once** (idempotent through the client-generated id).
+2. **Registration timeout:** `?scenario=register-timeout` → end of match →
+   state "Registration failed — it stays queued" → click **Retry
+   registration** → it answers quickly (the record already exists) and never
+   duplicates.
+3. **Offline at the end of the match:** `offline-at-end` → end → failure →
+   switch back to `success` and use **Retry registration**.
+4. **A late answer never overwrites the current page:** `out-of-order` →
+   paginated tabs (page 3 answers fast, the slow answer for page 1/2 arrives
+   afterwards and is discarded).
+5. **An error in a single tab:** `ranking-unavailable` → the Ranking tab shows
+   an error with a retry button while Match History keeps working (and vice
+   versa).
+6. **Empty/loading:** `empty` (empty lists) and `slow` (loading state).
+7. **A query that never answers:** `timeout` → the tab exhausts the TanStack
+   Query retries and shows an error with a retry button.
 
-## Testes (Playwright)
+## Tests (Playwright)
 
 ```bash
-npm run test:e2e     # desktop (63 testes)
-npm run test:mobile  # mobile
-npm run test         # os dois projetos
+npm run test:e2e     # desktop (63 tests)
+npm run test:mobile  # mobile (63 tests)
+npm run test         # both projects (126 tests)
 ```
 
-- **Relatórios:** HTML em `reports/playwright-report/` (`npm run report`),
-  resultados estruturados em `reports/results.json`.
-- **Traces e screenshots:** em falha, `test-results/<caso>/trace.zip` (abrir com
-  `npx playwright show-trace <arquivo>`).
-- **Regressão visual:** `tests/e2e/visual.spec.ts` compara menu, arena em estado
-  estável e tela de resultado contra baselines versionadas em
-  `tests/e2e/visual.spec.ts-snapshots/`. Após mudança visual intencional:
-  `npx playwright test --project=desktop --grep "main menu" --update-snapshots`
-  (revisar o diff antes de commitar).
-- **Reproduzir um teste só:**
-  `npm run test:e2e -- --grep "nome do teste"`; relatório com
+- **Reports:** HTML in `reports/playwright-report/` (`npm run report`),
+  structured results in `reports/results.json`.
+- **Traces and screenshots:** on failure, `test-results/<case>/trace.zip`
+  (open with `npx playwright show-trace <file>`).
+- **Visual regression:** `tests/e2e/visual.spec.ts` compares the menu, a
+  stable arena state and the result screen against baselines versioned per
+  project in `tests/e2e/visual.spec.ts-snapshots/`. After an intentional
+  visual change:
+  `npx playwright test --grep "main menu|arena|result screen" --update-snapshots`
+  (review the diff before committing).
+- **Run a single test:**
+  `npm run test:e2e -- --grep "test name"`; console output with
   `npm run test:e2e -- --reporter=list`.
-- **Isolamento:** cada teste abre contexto/próprio `localStorage`; cenário e
-  seed são fixados por teste; a suíte roda contra o **build de produção**
-  (mesma condição do deploy).
-- **Instrumentação de teste:** `window.__pirateBattle`
-  (`simulation`, `input`, `renderer`, `app`) observa estado e injeta inputs,
-  `window.__pirateBattleNet` controla cenário/seed/latência. Os testes de
-  combate acionam os controles reais do jogo (nunca aplicam dano direto na
-  simulação) e as regras, colisões e renderização seguem rodando de verdade.
+- **Isolation:** every test opens its own context/`localStorage`; scenario
+  and seed are pinned per test; the suite runs against the **production
+  build** (the same condition as the deploy).
+- **Test instrumentation:** `window.__pirateBattle`
+  (`simulation`, `input`, `renderer`, `app`) observes state and injects input,
+  `window.__pirateBattleNet` controls scenario/seed/latency. Combat tests
+  drive the game's real controls (they never apply damage directly to the
+  simulation), so rules, collisions and rendering all run for real.
 
-Suítes: navegação/opções (01), assets com falha e retry (02), movimento e
-arena (03), armas/cooldown/pontuação (04), inimigos e spawn (05), fim de
-partida (06), pausa/foco (07), resultado e persistência (08), abandono/navegação
-e toque (09), abas com loading/vazio/erro/paginação (10), registro e fila
-pendente (11), retries idempotentes e respostas fora de ordem (12) e regressão
-visual.
+Suites: navigation/options (01), failing assets and retry (02), movement and
+arena (03), weapons/cooldown/scoring (04), enemies and spawn (05), match end
+(06), pause/focus (07), result and persistence (08), abandon/navigation and
+touch (09), tabs with loading/empty/error/pagination (10), registration and
+the pending queue (11), idempotent retries and out-of-order answers (12) and
+visual regression.
 
 ## Performance
 
@@ -196,26 +201,26 @@ visual.
 npm run test:perf
 ```
 
-Roda contra o build otimizado e escreve em `reports/`:
+Runs against the optimized build and writes into `reports/`:
 
-- `performance.md` / `performance.json` — FPS médio, p95 do tempo entre
-  quadros e pico de entidades em uma partida real de 3 minutos; memória após
-  5 ciclos de iniciar → jogar → sair (procura crescimento contínuo de
-  recursos), além de hardware, navegador, resolução, configuração usada e
-  limitações observadas.
+- `performance.md` / `performance.json` — average FPS, p95 frame time and
+  peak entities in a real three-minute match; memory across five
+  start → play → leave cycles (looking for unbounded resource growth), plus
+  hardware, browser, resolution, configuration used and observed
+  limitations.
 
 ## Deploy
 
-O `dist/` é estático (React + Pixi + MSW worker em `public/`): funciona em
-Vercel, Netlify ou Cloudflare Pages sem variáveis de ambiente.
+`dist/` is static (React + Pixi + the MSW worker in `public/`): it runs on
+Vercel, Netlify or Cloudflare Pages with no environment variables.
 
 ```bash
-npm run build   # publicar dist/
+npm run build   # publish dist/
 ```
 
-**URL pública:** _a preencher na publicação (obrigatória para a entrega)._
+**Public URL:** _to fill in on publication (required for the delivery)._
 
-## Scripts de debug
+## Debug scripts
 
-Nenhum script avulso é necessário para rodar/validar o projeto — tudo passa
-pelos comandos da tabela acima e pelas suítes em `tests/`.
+No standalone script is needed to run or validate the project — everything
+goes through the commands in the table above and the suites in `tests/`.

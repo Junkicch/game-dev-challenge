@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-10-08T00:09:12.691Z",
+  "environment": {
+    "platform": "linux",
+    "arch": "x64",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11300H @ 3.10GHz",
+    "cores": 4,
+    "browser": "Chromium",
+    "resolution": "1280x800",
+    "deviceScaleFactor": 1,
+    "renderer": "SwiftShader (no GPU) — documented limitation",
+    "build": "production (vite preview)",
+    "config": {
+      "sessionTimeSeconds": 180,
+      "spawnIntervalMs": 3000
+    }
+  },
+  "threeMinuteMatch": {
+    "simulationElapsedMs": 179992.69999998788,
+    "wallClockMs": 170707,
+    "framesCaptured": 1275,
+    "averageFrameMs": 140.27,
+    "averageFps": 7.1,
+    "p95FrameMs": 200.1,
+    "peakEntities": 29,
+    "averageEntities": 14.7,
+    "finalScore": 0,
+    "measurement": "idle ship kept afloat (health pinned) so the sample covers the full match; spawns and rendering untouched"
+  },
+  "memoryCycles": [
+    {
+      "cycle": 1,
+      "heapMb": 9.74,
+      "deltaMb": 3.47
+    },
+    {
+      "cycle": 2,
+      "heapMb": 10.9,
+      "deltaMb": 4.64
+    },
+    {
+      "cycle": 3,
+      "heapMb": 9.68,
+      "deltaMb": 3.41
+    },
+    {
+      "cycle": 4,
+      "heapMb": 9.8,
+      "deltaMb": 3.54
+    },
+    {
+      "cycle": 5,
+      "heapMb": 10.12,
+      "deltaMb": 3.85
+    }
+  ]
+}

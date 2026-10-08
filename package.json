@@ -12,7 +12,7 @@
     "test": "playwright test",
     "test:e2e": "playwright test --project=desktop",
     "test:mobile": "playwright test --project=mobile",
-    "test:perf": "playwright test tests/perf --project=desktop --reporter=list,json",
+    "test:perf": "playwright test --config=playwright.perf.config.ts",
     "report": "playwright show-report reports/playwright-report"
   },
   "dependencies": {

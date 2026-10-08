@@ -106,9 +106,11 @@ test.describe('08.9 abandon, repeated navigation and touch controls', () => {
   test('portrait shows the rotate hint', async ({ page }) => {
     test.skip(!isMobile(), 'rotate hint only applies to coarse-pointer portrait');
     await boot(page);
+    await startMatch(page); // the hint lives on the game screen, not the menu
+    await expect(page.locator('.rotate-hint')).toBeHidden();
     await page.setViewportSize({ width: 390, height: 844 });
-    expect(await page.isVisible('.rotate-hint')).toBe(true);
+    await expect(page.locator('.rotate-hint')).toBeVisible();
     await page.setViewportSize({ width: 844, height: 390 });
-    expect(await page.isVisible('.rotate-hint')).toBe(false);
+    await expect(page.locator('.rotate-hint')).toBeHidden();
   });
 });

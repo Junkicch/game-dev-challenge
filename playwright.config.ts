@@ -46,7 +46,9 @@ export default defineConfig({
     {
       name: 'mobile',
       use: {
-        ...devices['Pixel 5'],
+        // landscape: the rotate-hint gate covers the screen in portrait, and
+        // the game (plus this suite) is meant to run horizontally
+        ...devices['Pixel 5 landscape'],
       },
     },
   ],
