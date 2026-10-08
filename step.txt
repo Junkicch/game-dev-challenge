@@ -262,6 +262,11 @@ Verificacao ate aqui:
 - tsc -b limpo, eslint limpo, npm run build OK.
 
 Restante:
-- [ ] Deploy: URL pública obrigatória (Vercel/Netlify/CF) - pendente de
-      escolha/credenciais; README tem placeholder.
-- [ ] Commit de entrega (18 arquivos alterados/novos no worktree).
+- [x] Deploy: publicado na Vercel (projeto linkado, .vercel/ no gitignore):
+  https://game-developer-challenge-plum.vercel.app
+  - ssoProtection (Vercel Authentication) desligado via API para acesso
+    publico;
+  - smoke no build publicado: menu + 5 linhas de ranking via MSW + partida
+    rodando com canvas + service worker, zero erros de console.
+- [ ] Commit de entrega (19 arquivos alterados/novos no worktree) - aguardando
+      autorizacao.

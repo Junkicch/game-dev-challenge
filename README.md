@@ -9,7 +9,8 @@ APIs mocked with MSW and consumed through Axios + TanStack Query.
 - **Documentation:** [`ARCHITECTURE.md`](ARCHITECTURE.md) (decisions,
   React/Pixi integration, limitations) · [`DESAFIO.md`](DESAFIO.md) (original
   brief, in Portuguese) · [`step.txt`](step.txt) (phase log)
-- **Deploy:** public URL — *pending* (see [Deploy](#deploy))
+- **Deploy:** https://game-developer-challenge-plum.vercel.app (see
+  [Deploy](#deploy))
 
 ---
 
@@ -218,7 +219,10 @@ Vercel, Netlify or Cloudflare Pages with no environment variables.
 npm run build   # publish dist/
 ```
 
-**Public URL:** _to fill in on publication (required for the delivery)._
+**Public URL:** https://game-developer-challenge-plum.vercel.app
+
+The project is linked for Vercel CLI (`.vercel/` is git-ignored); redeploy
+with `npx vercel deploy --prod`.
 
 ## Debug scripts
 
